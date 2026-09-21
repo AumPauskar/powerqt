@@ -11,6 +11,9 @@ qt_add_executable(powerqt
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    batterymanager.h
+    batterymanager.cpp
+    batteryPath
 )
 
 target_link_libraries(powerqt
