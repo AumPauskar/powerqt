@@ -13,8 +13,9 @@ public:
     bool setChargeThreshold(int threshold);
 
 private:
-    QString batteryPath;
-    QString thresholdPath;
+    QString batteryLevelPath;
+    QString batteryStatusPath;
+    QString batteryThresholdPath;
 };
 
 #endif // BATTERYMANAGER_H

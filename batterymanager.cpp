@@ -3,16 +3,44 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 BatteryManager::BatteryManager()
-    : batteryPath("/sys/class/power_supply/BAT1/capacity")
-    , thresholdPath("/sys/class/power_supply/BAT1/charge_control_end_threshold")
 {
+    QFile file("config/battery.json");
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Could not open battery configuration:"
+                 << file.errorString();
+        return;
+    }
+
+    const QByteArray data = file.readAll();
+    file.close();
+
+    const QJsonDocument document = QJsonDocument::fromJson(data);
+
+    if (!document.isObject()) {
+        qDebug() << "Battery configuration is not a JSON object";
+        return;
+    }
+
+    const QJsonObject object = document.object();
+
+    batteryLevelPath =
+        object["batteryLevel"].toString();
+
+    batteryStatusPath =
+        object["batteryStatus"].toString();
+
+    batteryThresholdPath =
+        object["batteryThreshold"].toString();
 }
 
 int BatteryManager::batteryLevel() const
 {
-    QFile file(batteryPath);
+    QFile file(batteryLevelPath);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return -1;
@@ -25,7 +53,7 @@ int BatteryManager::batteryLevel() const
 
 bool BatteryManager::setChargeThreshold(int threshold)
 {
-    QFile file(thresholdPath);
+    QFile file(batteryThresholdPath);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qDebug() << "Failed to open threshold file:"

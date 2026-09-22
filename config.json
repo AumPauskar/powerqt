@@ -1,0 +1,5 @@
+{
+    "batteryLevel": "/sys/class/power_supply/BAT1/capacity",
+    "batteryStatus": "/sys/class/power_supply/BAT1/status",
+    "batteryThreshold": "/sys/class/power_supply/BAT1/charge_control_end_threshold"
+}

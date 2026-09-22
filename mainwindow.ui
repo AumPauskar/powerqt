@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,47 +14,87 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Battery Manager</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QLabel" name="label">
+   <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>0</y>
-      <width>131</width>
-      <height>41</height>
+      <x>409</x>
+      <y>309</y>
+      <width>391</width>
+      <height>241</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Battery Manager</string>
-    </property>
+    <layout class="QVBoxLayout" name="batteryOverview">
+     <item>
+      <widget class="QLabel" name="batteryLabel">
+       <property name="text">
+        <string>Battery: 73%</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="batteryStatus">
+       <property name="text">
+        <string>Battery Status:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="batteryThreshold">
+       <property name="text">
+        <string>Charge limit:</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
-   <widget class="QLabel" name="batteryLabel">
+   <widget class="QGroupBox" name="batterySetup">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>140</y>
-      <width>111</width>
-      <height>18</height>
+      <x>0</x>
+      <y>309</y>
+      <width>401</width>
+      <height>241</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Battery: 73%</string>
+    <property name="title">
+     <string>Set battery level</string>
     </property>
-   </widget>
-   <widget class="QPushButton" name="testButton">
-    <property name="geometry">
-     <rect>
-      <x>310</x>
-      <y>220</y>
-      <width>86</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Test</string>
-    </property>
+    <widget class="QWidget" name="verticalLayoutWidget_2">
+     <property name="geometry">
+      <rect>
+       <x>-1</x>
+       <y>-1</y>
+       <width>401</width>
+       <height>241</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="editBattery">
+      <item>
+       <widget class="QRadioButton" name="batt100">
+        <property name="text">
+         <string>Full capacity - 100%</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="batt80">
+        <property name="text">
+         <string>Partially full - 80%</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="batt60">
+        <property name="text">
+         <string>Maximum longevity - 60%</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -60,7 +103,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>23</height>
+     <height>30</height>
     </rect>
    </property>
   </widget>
