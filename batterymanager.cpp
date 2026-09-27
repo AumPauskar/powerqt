@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QProcess>
 #include <QTextStream>
 #include <QDebug>
 #include <QJsonDocument>
@@ -96,16 +97,27 @@ int BatteryManager::chargeThreshold() const
 
 bool BatteryManager::setChargeThreshold(int threshold)
 {
+    // 1. Try direct write (succeeds if udev rule is configured or app has write permissions)
     QFile file(batteryThresholdPath);
-
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qDebug() << "Failed to open threshold file:"
-                 << file.errorString();
-        return false;
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream stream(&file);
+        stream << threshold << "\n";
+        return true;
     }
 
-    QTextStream stream(&file);
-    stream << threshold << "\n";
+    qDebug() << "Direct write failed (" << file.errorString() << "), attempting pkexec fallback...";
 
-    return true;
+    // 2. Fallback to pkexec to elevate privileges via Polkit GUI dialog
+    QProcess process;
+    const QString command = QString("echo %1 > %2").arg(threshold).arg(batteryThresholdPath);
+    process.start("pkexec", QStringList() << "sh" << "-c" << command);
+    process.waitForFinished();
+
+    if (process.exitCode() == 0) {
+        qDebug() << "Threshold successfully updated via pkexec";
+        return true;
+    }
+
+    qDebug() << "pkexec failed with exit code:" << process.exitCode();
+    return false;
 }
