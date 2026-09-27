@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
+
 project(powerqt LANGUAGES CXX)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
@@ -7,14 +8,13 @@ qt_standard_project_setup()
 
 qt_add_executable(powerqt
     WIN32 MACOSX_BUNDLE
+
     main.cpp
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
     batterymanager.h
     batterymanager.cpp
-    config.json
-
 )
 
 target_link_libraries(powerqt
@@ -23,15 +23,15 @@ target_link_libraries(powerqt
         Qt::Widgets
 )
 
+include(GNUInstallDirs)
+
 install(TARGETS powerqt
-    BUNDLE  DESTINATION .
+    BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-qt_generate_deploy_app_script(
-    TARGET powerqt
-    OUTPUT_SCRIPT deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
+install(FILES
+    config.json
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/powerqt
 )
-install(SCRIPT ${deploy_script})

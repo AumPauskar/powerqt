@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QFile>
 #include <QProcess>
+#include <QStandardPaths>
 #include <QTextStream>
 #include <QDebug>
 #include <QJsonDocument>
@@ -34,6 +35,8 @@ bool BatteryManager::loadConfig(const QString &filePath)
         candidatePaths << "config.json"
                        << QCoreApplication::applicationDirPath() + "/config.json"
                        << QCoreApplication::applicationDirPath() + "/../config.json"
+                       << QStandardPaths::locate(QStandardPaths::GenericDataLocation, "powerqt/config.json")
+                       << "/usr/share/powerqt/config.json"
                        << "config/battery.json";
     }
 
