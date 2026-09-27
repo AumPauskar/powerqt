@@ -21,6 +21,15 @@ public:
 
 private slots:
     void updateBatteryInfo();
+    void loadSettingsToUi();
+    void onSaveSettingsClicked();
+    void onResetSettingsClicked();
+    void onBrowseBatteryDirClicked();
+    void onDetectBatteriesClicked();
+    void onBatteryComboActivated(int index);
+    void onBrowseLevelClicked();
+    void onBrowseStatusClicked();
+    void onBrowseThresholdClicked();
 
 private:
     Ui::MainWindow *ui;

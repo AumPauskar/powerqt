@@ -22,13 +22,20 @@ BatteryManager::BatteryManager()
         batteryThresholdPath = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
     }
 
-    // Check multiple candidate locations for config.json
-    const QStringList candidatePaths = {
-        "config.json",
-        QCoreApplication::applicationDirPath() + "/config.json",
-        QCoreApplication::applicationDirPath() + "/../config.json",
-        "config/battery.json"
-    };
+    loadConfig();
+}
+
+bool BatteryManager::loadConfig(const QString &filePath)
+{
+    QStringList candidatePaths;
+    if (!filePath.isEmpty()) {
+        candidatePaths << filePath;
+    } else {
+        candidatePaths << "config.json"
+                       << QCoreApplication::applicationDirPath() + "/config.json"
+                       << QCoreApplication::applicationDirPath() + "/../config.json"
+                       << "config/battery.json";
+    }
 
     for (const QString &path : candidatePaths) {
         QFile file(path);
@@ -49,10 +56,82 @@ BatteryManager::BatteryManager()
                 if (object.contains("batteryThreshold")) {
                     batteryThresholdPath = object["batteryThreshold"].toString();
                 }
-                break;
+                configFilePath = QFileInfo(file).absoluteFilePath();
+                return true;
             }
         }
     }
+    return false;
+}
+
+bool BatteryManager::saveConfig(const QString &filePath)
+{
+    QString targetPath = filePath.isEmpty() ? configFilePath : filePath;
+    if (targetPath.isEmpty()) {
+        targetPath = "config.json";
+    }
+
+    QFile file(targetPath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Failed to open config file for writing:" << file.errorString();
+        return false;
+    }
+
+    QJsonObject object;
+    object["batteryLevel"] = batteryLevelPath;
+    object["batteryStatus"] = batteryStatusPath;
+    object["batteryThreshold"] = batteryThresholdPath;
+
+    QJsonDocument doc(object);
+    file.write(doc.toJson(QJsonDocument::Indented));
+    file.close();
+
+    configFilePath = QFileInfo(file).absoluteFilePath();
+    return true;
+}
+
+void BatteryManager::setPaths(const QString &levelPath, const QString &statusPath, const QString &thresholdPath)
+{
+    batteryLevelPath = levelPath;
+    batteryStatusPath = statusPath;
+    batteryThresholdPath = thresholdPath;
+}
+
+void BatteryManager::setBatteryDirectory(const QString &batteryDir)
+{
+    QString base = batteryDir;
+    if (base.endsWith('/')) {
+        base.chop(1);
+    }
+    batteryLevelPath = base + "/capacity";
+    batteryStatusPath = base + "/status";
+    batteryThresholdPath = base + "/charge_control_end_threshold";
+}
+
+QStringList BatteryManager::detectBatteries()
+{
+    QStringList batteries;
+    QDir dir("/sys/class/power_supply");
+    if (!dir.exists()) {
+        return batteries;
+    }
+
+    const QFileInfoList entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QFileInfo &info : entries) {
+        // Check "type" file
+        QFile typeFile(info.absoluteFilePath() + "/type");
+        if (typeFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QString type = QTextStream(&typeFile).readLine().trimmed();
+            if (type.compare("Battery", Qt::CaseInsensitive) == 0) {
+                batteries << info.absoluteFilePath();
+                continue;
+            }
+        }
+        if (info.fileName().startsWith("BAT", Qt::CaseInsensitive)) {
+            batteries << info.absoluteFilePath();
+        }
+    }
+    return batteries;
 }
 
 int BatteryManager::batteryLevel() const

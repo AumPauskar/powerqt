@@ -2,108 +2,304 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
-  <property name="enabled">
-   <bool>true</bool>
-  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>700</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Battery Manager</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="verticalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>409</x>
-      <y>309</y>
-      <width>391</width>
-      <height>241</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="batteryOverview">
-     <item>
-      <widget class="QLabel" name="batteryLabel">
-       <property name="text">
-        <string>Battery: 73%</string>
-       </property>
+   <layout class="QVBoxLayout" name="centralLayout">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabDashboard">
+       <attribute name="title">
+        <string>Dashboard</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="dashboardLayout">
+        <item>
+         <widget class="QGroupBox" name="batteryOverviewGroup">
+          <property name="title">
+           <string>Battery Status</string>
+          </property>
+          <layout class="QVBoxLayout" name="batteryOverview">
+           <item>
+            <widget class="QLabel" name="batteryLabel">
+             <property name="font">
+              <font>
+               <pointsize>14</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Battery: --%</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="batteryStatus">
+             <property name="font">
+              <font>
+               <pointsize>11</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Battery Status: --</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="batteryThreshold">
+             <property name="font">
+              <font>
+               <pointsize>11</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Charge limit: --%</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="batterySetup">
+          <property name="title">
+           <string>Set Charge Limit</string>
+          </property>
+          <layout class="QVBoxLayout" name="editBattery">
+           <item>
+            <widget class="QRadioButton" name="batt100">
+             <property name="text">
+              <string>Full capacity - 100%</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="batt80">
+             <property name="text">
+              <string>Partially full - 80%</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="batt60">
+             <property name="text">
+              <string>Maximum longevity - 60%</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="dashboardVerticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="batteryStatus">
-       <property name="text">
-        <string>Battery Status:</string>
-       </property>
+      <widget class="QWidget" name="tabSettings">
+       <attribute name="title">
+        <string>Settings</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="settingsLayout">
+        <item>
+         <widget class="QGroupBox" name="batteryLocationGroup">
+          <property name="title">
+           <string>Battery Directory</string>
+          </property>
+          <layout class="QVBoxLayout" name="batteryLocationLayout">
+           <item>
+            <layout class="QHBoxLayout" name="detectLayout">
+             <item>
+              <widget class="QLabel" name="labelDetected">
+               <property name="text">
+                <string>Detected Batteries:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="batterySelectCombo"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnDetectBatteries">
+               <property name="text">
+                <string>Scan</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="dirLayout">
+             <item>
+              <widget class="QLabel" name="labelDir">
+               <property name="text">
+                <string>Battery Directory:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="batteryDirEdit">
+               <property name="placeholderText">
+                <string>/sys/class/power_supply/BAT1</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnBrowseBatteryDir">
+               <property name="text">
+                <string>Browse...</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="customFilesGroup">
+          <property name="title">
+           <string>Sysfs File Nodes (Advanced)</string>
+          </property>
+          <layout class="QGridLayout" name="customFilesGridLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelLevel">
+             <property name="text">
+              <string>Capacity:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="levelPathEdit"/>
+           </item>
+           <item row="0" column="2">
+            <widget class="QPushButton" name="btnBrowseLevel">
+             <property name="text">
+              <string>Browse...</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelStatus">
+             <property name="text">
+              <string>Status:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="statusPathEdit"/>
+           </item>
+           <item row="1" column="2">
+            <widget class="QPushButton" name="btnBrowseStatus">
+             <property name="text">
+              <string>Browse...</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelThreshold">
+             <property name="text">
+              <string>Threshold:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="thresholdPathEdit"/>
+           </item>
+           <item row="2" column="2">
+            <widget class="QPushButton" name="btnBrowseThreshold">
+             <property name="text">
+              <string>Browse...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="settingsButtonsLayout">
+          <item>
+           <widget class="QPushButton" name="btnSaveSettings">
+            <property name="text">
+             <string>Save Settings</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnResetSettings">
+            <property name="text">
+             <string>Reset Defaults</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="settingsStatusLabel">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="settingsHorizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="settingsVerticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="batteryThreshold">
-       <property name="text">
-        <string>Charge limit:</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QGroupBox" name="batterySetup">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>309</y>
-      <width>401</width>
-      <height>241</height>
-     </rect>
-    </property>
-    <property name="title">
-     <string>Set battery level</string>
-    </property>
-    <widget class="QWidget" name="verticalLayoutWidget_2">
-     <property name="geometry">
-      <rect>
-       <x>-1</x>
-       <y>-1</y>
-       <width>401</width>
-       <height>241</height>
-      </rect>
-     </property>
-     <layout class="QVBoxLayout" name="editBattery">
-      <item>
-       <widget class="QRadioButton" name="batt100">
-        <property name="text">
-         <string>Full capacity - 100%</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="batt80">
-        <property name="text">
-         <string>Partially full - 80%</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="batt60">
-        <property name="text">
-         <string>Maximum longevity - 60%</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
-     <height>30</height>
+     <width>700</width>
+     <height>23</height>
     </rect>
    </property>
   </widget>
