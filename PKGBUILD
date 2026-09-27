@@ -1,6 +1,6 @@
 pkgname=powerqt
 pkgver=0.1.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Qt battery charge threshold manager"
 arch=('x86_64')
 license=('MIT')

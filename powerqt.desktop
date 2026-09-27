@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=PowerQt
+GenericName=Battery Charge Manager
+Comment=Monitor battery status and set battery charge threshold limits
+Exec=powerqt
+Icon=preferences-system-power
+Terminal=false
+Categories=Qt;System;Settings;HardwareSettings;
+Keywords=battery;power;charge;threshold;limit;energy;
+StartupNotify=true

@@ -15,6 +15,7 @@ qt_add_executable(powerqt
     mainwindow.ui
     batterymanager.h
     batterymanager.cpp
+    powerqt.desktop
 )
 
 target_link_libraries(powerqt
@@ -34,4 +35,9 @@ install(TARGETS powerqt
 install(FILES
     config.json
     DESTINATION ${CMAKE_INSTALL_DATADIR}/powerqt
+)
+
+install(FILES
+    powerqt.desktop
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
 )
