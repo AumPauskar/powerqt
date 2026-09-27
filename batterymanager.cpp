@@ -1,5 +1,7 @@
 #include "batterymanager.h"
 
+#include <QCoreApplication>
+#include <QDir>
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
@@ -8,34 +10,48 @@
 
 BatteryManager::BatteryManager()
 {
-    QFile file("config/battery.json");
+    // Sensible defaults based on standard Linux power supply paths
+    batteryLevelPath = "/sys/class/power_supply/BAT1/capacity";
+    batteryStatusPath = "/sys/class/power_supply/BAT1/status";
+    batteryThresholdPath = "/sys/class/power_supply/BAT1/charge_control_end_threshold";
 
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Could not open battery configuration:"
-                 << file.errorString();
-        return;
+    if (!QFile::exists(batteryLevelPath) && QFile::exists("/sys/class/power_supply/BAT0/capacity")) {
+        batteryLevelPath = "/sys/class/power_supply/BAT0/capacity";
+        batteryStatusPath = "/sys/class/power_supply/BAT0/status";
+        batteryThresholdPath = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
     }
 
-    const QByteArray data = file.readAll();
-    file.close();
+    // Check multiple candidate locations for config.json
+    const QStringList candidatePaths = {
+        "config.json",
+        QCoreApplication::applicationDirPath() + "/config.json",
+        QCoreApplication::applicationDirPath() + "/../config.json",
+        "config/battery.json"
+    };
 
-    const QJsonDocument document = QJsonDocument::fromJson(data);
+    for (const QString &path : candidatePaths) {
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            const QByteArray data = file.readAll();
+            file.close();
 
-    if (!document.isObject()) {
-        qDebug() << "Battery configuration is not a JSON object";
-        return;
+            const QJsonDocument document = QJsonDocument::fromJson(data);
+            if (document.isObject()) {
+                const QJsonObject object = document.object();
+
+                if (object.contains("batteryLevel")) {
+                    batteryLevelPath = object["batteryLevel"].toString();
+                }
+                if (object.contains("batteryStatus")) {
+                    batteryStatusPath = object["batteryStatus"].toString();
+                }
+                if (object.contains("batteryThreshold")) {
+                    batteryThresholdPath = object["batteryThreshold"].toString();
+                }
+                break;
+            }
+        }
     }
-
-    const QJsonObject object = document.object();
-
-    batteryLevelPath =
-        object["batteryLevel"].toString();
-
-    batteryStatusPath =
-        object["batteryStatus"].toString();
-
-    batteryThresholdPath =
-        object["batteryThreshold"].toString();
 }
 
 int BatteryManager::batteryLevel() const
@@ -48,7 +64,34 @@ int BatteryManager::batteryLevel() const
 
     QTextStream stream(&file);
 
-    return stream.readLine().toInt();
+    return stream.readLine().trimmed().toInt();
+}
+
+QString BatteryManager::batteryStatus() const
+{
+    QFile file(batteryStatusPath);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return QString();
+    }
+
+    QTextStream stream(&file);
+
+    return stream.readLine().trimmed();
+}
+
+int BatteryManager::chargeThreshold() const
+{
+    QFile file(batteryThresholdPath);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return -1;
+    }
+
+    QTextStream stream(&file);
+    bool ok = false;
+    int threshold = stream.readLine().trimmed().toInt(&ok);
+    return ok ? threshold : -1;
 }
 
 bool BatteryManager::setChargeThreshold(int threshold)
@@ -62,7 +105,7 @@ bool BatteryManager::setChargeThreshold(int threshold)
     }
 
     QTextStream stream(&file);
-    stream << threshold;
+    stream << threshold << "\n";
 
     return true;
 }

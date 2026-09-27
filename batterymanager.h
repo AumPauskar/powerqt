@@ -9,6 +9,8 @@ public:
     BatteryManager();
 
     int batteryLevel() const;
+    QString batteryStatus() const;
+    int chargeThreshold() const;
 
     bool setChargeThreshold(int threshold);
 

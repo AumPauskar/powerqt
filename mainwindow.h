@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "batterymanager.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -17,7 +19,11 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
+private slots:
+    void updateBatteryInfo();
+
 private:
     Ui::MainWindow *ui;
+    BatteryManager m_battery;
 };
 #endif // MAINWINDOW_H
