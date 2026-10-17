@@ -13,6 +13,9 @@ public:
     int chargeThreshold() const;
     double powerConsumptionWatts() const;
     QString fanSpeed() const;
+    QString cpuClockSpeed() const;
+    int activeCpuCount() const;
+    int parkedCpuCount() const;
 
     bool setChargeThreshold(int threshold);
 

@@ -96,6 +96,9 @@ void MainWindow::updateBatteryInfo()
 
     const QString fanSpeed = m_battery.fanSpeed();
     ui->fanSpeed->setText(fanSpeed.isEmpty() ? "Fan Speed: Unavailable" : fanSpeed);
+    ui->cpuClock->setText(m_battery.cpuClockSpeed());
+    ui->activeCpus->setText(QString("Active CPUs: %1").arg(m_battery.activeCpuCount()));
+    ui->parkedCpus->setText(QString("Parked CPUs: %1").arg(m_battery.parkedCpuCount()));
 
     const int threshold = m_battery.chargeThreshold();
     if (threshold >= 0) {
@@ -119,7 +122,7 @@ void MainWindow::updatePowerProfile()
 {
     const QString executable = QStandardPaths::findExecutable("powerprofilesctl");
     if (executable.isEmpty()) {
-        ui->powerProfileButtonsContainer->setEnabled(false);
+        setPowerProfileButtonsEnabled(false);
         ui->powerProfileStatus->setText("powerprofilesctl is not available");
         return;
     }
@@ -127,7 +130,7 @@ void MainWindow::updatePowerProfile()
     QProcess listProcess;
     listProcess.start(executable, {"list"});
     if (!listProcess.waitForFinished(1000) || listProcess.exitCode() != 0) {
-        ui->powerProfileButtonsContainer->setEnabled(false);
+        setPowerProfileButtonsEnabled(false);
         ui->powerProfileStatus->setText("Unable to read available power profiles");
         return;
     }
@@ -152,7 +155,7 @@ void MainWindow::updatePowerProfile()
     }
 
     if (profiles.isEmpty()) {
-        ui->powerProfileButtonsContainer->setEnabled(false);
+        setPowerProfileButtonsEnabled(false);
         ui->powerProfileStatus->setText("No power profiles available");
         return;
     }
@@ -161,7 +164,7 @@ void MainWindow::updatePowerProfile()
     QProcess getProcess;
     getProcess.start(executable, {"get"});
     if (!getProcess.waitForFinished(1000) || getProcess.exitCode() != 0) {
-        ui->powerProfileButtonsContainer->setEnabled(false);
+        setPowerProfileButtonsEnabled(false);
         ui->powerProfileStatus->setText("Unable to read active power profile");
         return;
     }
@@ -178,7 +181,7 @@ void MainWindow::updatePowerProfile()
         ui->powerProfileStatus->setText(QString("Active: %1").arg(activeProfile.isEmpty() ? "Unknown" : activeProfile));
     }
     ui->powerProfileStatus->setStyleSheet("");
-    ui->powerProfileButtonsContainer->setEnabled(true);
+    setPowerProfileButtonsEnabled(true);
 }
 
 void MainWindow::rebuildPowerProfileButtons(const QStringList &profiles)
@@ -187,7 +190,7 @@ void MainWindow::rebuildPowerProfileButtons(const QStringList &profiles)
         return;
     }
 
-    QGridLayout *layout = qobject_cast<QGridLayout *>(ui->powerProfileButtonsContainer->layout());
+    QGridLayout *layout = ui->powerProfileButtonsLayout;
     while (QLayoutItem *item = layout->takeAt(0)) {
         delete item->widget();
         delete item;
@@ -201,12 +204,22 @@ void MainWindow::rebuildPowerProfileButtons(const QStringList &profiles)
         QString label = profiles.at(i);
         label.replace('-', ' ');
         label = label.left(1).toUpper() + label.mid(1);
-        auto *button = new QRadioButton(label, ui->powerProfileButtonsContainer);
+        auto *button = new QRadioButton(label, ui->powerManagementGroup);
         m_powerProfileButtonGroup->addButton(button, i);
         layout->addWidget(button, i / columns, i % columns);
     }
     connect(m_powerProfileButtonGroup, &QButtonGroup::idClicked,
             this, &MainWindow::onPowerProfileActivated);
+}
+
+void MainWindow::setPowerProfileButtonsEnabled(bool enabled)
+{
+    if (!m_powerProfileButtonGroup) {
+        return;
+    }
+    for (QAbstractButton *button : m_powerProfileButtonGroup->buttons()) {
+        button->setEnabled(enabled);
+    }
 }
 
 void MainWindow::onPowerProfileActivated(int index)

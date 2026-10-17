@@ -38,6 +38,7 @@ private slots:
 private:
     void updatePowerProfile();
     void rebuildPowerProfileButtons(const QStringList &profiles);
+    void setPowerProfileButtonsEnabled(bool enabled);
 
     Ui::MainWindow *ui;
     BatteryManager m_battery;

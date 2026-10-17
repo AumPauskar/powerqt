@@ -9,7 +9,42 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QThread>
 #include <cmath>
+
+namespace {
+int countCpuList(const QString &cpuList)
+{
+    int count = 0;
+    for (const QString &part : cpuList.split(',', Qt::SkipEmptyParts)) {
+        const QStringList range = part.trimmed().split('-');
+        bool firstOk = false;
+        const int first = range.value(0).toInt(&firstOk);
+        if (!firstOk) {
+            continue;
+        }
+        if (range.size() == 1) {
+            ++count;
+            continue;
+        }
+        bool lastOk = false;
+        const int last = range.value(1).toInt(&lastOk);
+        if (lastOk && last >= first) {
+            count += last - first + 1;
+        }
+    }
+    return count;
+}
+
+int readCpuListCount(const QString &path)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return -1;
+    }
+    return countCpuList(QTextStream(&file).readLine().trimmed());
+}
+}
 
 BatteryManager::BatteryManager()
 {
@@ -261,6 +296,45 @@ QString BatteryManager::fanSpeed() const
     }
 
     return readings.join("\n");
+}
+
+QString BatteryManager::cpuClockSpeed() const
+{
+    const int activeCpus = activeCpuCount();
+    double totalKilohertz = 0.0;
+    int readings = 0;
+
+    for (int cpu = 0; cpu < activeCpus; ++cpu) {
+        QFile file(QString("/sys/devices/system/cpu/cpu%1/cpufreq/scaling_cur_freq").arg(cpu));
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            continue;
+        }
+        bool ok = false;
+        const double kilohertz = QTextStream(&file).readLine().trimmed().toDouble(&ok);
+        if (ok) {
+            totalKilohertz += kilohertz;
+            ++readings;
+        }
+    }
+
+    if (readings == 0) {
+        return "CPU Clock: Unavailable";
+    }
+
+    const double gigahertz = totalKilohertz / readings / 1'000'000.0;
+    return QString("CPU Clock: %1 GHz").arg(gigahertz, 0, 'f', 2);
+}
+
+int BatteryManager::activeCpuCount() const
+{
+    const int count = readCpuListCount("/sys/devices/system/cpu/online");
+    return count >= 0 ? count : QThread::idealThreadCount();
+}
+
+int BatteryManager::parkedCpuCount() const
+{
+    const int count = readCpuListCount("/sys/devices/system/cpu/offline");
+    return count >= 0 ? count : 0;
 }
 
 bool BatteryManager::setChargeThreshold(int threshold)
