@@ -94,6 +94,9 @@ void MainWindow::updateBatteryInfo()
         ui->batteryPower->setText("Power Consumption: Unknown");
     }
 
+    const QString fanSpeed = m_battery.fanSpeed();
+    ui->fanSpeed->setText(fanSpeed.isEmpty() ? "Fan Speed: Unavailable" : fanSpeed);
+
     const int threshold = m_battery.chargeThreshold();
     if (threshold >= 0) {
         ui->batteryThreshold->setText(QString("Charge limit: %1%").arg(threshold));

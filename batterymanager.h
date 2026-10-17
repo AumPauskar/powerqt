@@ -12,6 +12,7 @@ public:
     QString batteryStatus() const;
     int chargeThreshold() const;
     double powerConsumptionWatts() const;
+    QString fanSpeed() const;
 
     bool setChargeThreshold(int threshold);
 

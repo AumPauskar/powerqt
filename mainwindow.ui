@@ -26,7 +26,9 @@
        </attribute>
        <layout class="QVBoxLayout" name="dashboardLayout">
         <item>
-         <widget class="QGroupBox" name="batteryOverviewGroup">
+         <layout class="QHBoxLayout" name="dashboardStatusLayout">
+          <item>
+           <widget class="QGroupBox" name="batteryOverviewGroup">
           <property name="title">
            <string>Battery Status</string>
           </property>
@@ -81,7 +83,30 @@
             </widget>
            </item>
           </layout>
-         </widget>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="fanStatusGroup">
+            <property name="title">
+             <string>Fan Status</string>
+            </property>
+            <layout class="QVBoxLayout" name="fanStatusLayout">
+             <item>
+              <widget class="QLabel" name="fanSpeed">
+               <property name="font">
+                <font>
+                 <pointsize>11</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Fan Speed: Unavailable</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QGroupBox" name="batterySetup">

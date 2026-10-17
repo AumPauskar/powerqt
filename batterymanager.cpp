@@ -235,6 +235,34 @@ double BatteryManager::powerConsumptionWatts() const
     return foundPowerReading ? watts : -1.0;
 }
 
+QString BatteryManager::fanSpeed() const
+{
+    QStringList readings;
+    const QDir hwmonRoot("/sys/class/hwmon");
+    const QFileInfoList controllers = hwmonRoot.entryInfoList(
+        QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+
+    for (const QFileInfo &controller : controllers) {
+        const QDir controllerDir(controller.absoluteFilePath());
+        const QFileInfoList fanFiles = controllerDir.entryInfoList(
+            {"fan*_input"}, QDir::Files | QDir::System, QDir::Name);
+        for (const QFileInfo &fanFile : fanFiles) {
+            QFile file(fanFile.absoluteFilePath());
+            if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                continue;
+            }
+
+            bool ok = false;
+            const int rpm = QTextStream(&file).readLine().trimmed().toInt(&ok);
+            if (ok) {
+                readings.append(QString("Fan %1: %2 RPM").arg(readings.size() + 1).arg(rpm));
+            }
+        }
+    }
+
+    return readings.join("\n");
+}
+
 bool BatteryManager::setChargeThreshold(int threshold)
 {
     // 1. Try direct write (succeeds if udev rule is configured or app has write permissions)
