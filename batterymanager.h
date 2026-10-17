@@ -11,6 +11,7 @@ public:
     int batteryLevel() const;
     QString batteryStatus() const;
     int chargeThreshold() const;
+    double powerConsumptionWatts() const;
 
     bool setChargeThreshold(int threshold);
 

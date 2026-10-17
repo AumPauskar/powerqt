@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <cmath>
 
 BatteryManager::BatteryManager()
 {
@@ -175,6 +176,63 @@ int BatteryManager::chargeThreshold() const
     bool ok = false;
     int threshold = stream.readLine().trimmed().toInt(&ok);
     return ok ? threshold : -1;
+}
+
+double BatteryManager::powerConsumptionWatts() const
+{
+    double watts = 0.0;
+    bool foundPowerReading = false;
+
+    const QFileInfoList batteries = QDir("/sys/class/power_supply").entryInfoList(
+        QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QFileInfo &battery : batteries) {
+        QFile typeFile(battery.absoluteFilePath() + "/type");
+        if (typeFile.open(QIODevice::ReadOnly | QIODevice::Text)
+            && QTextStream(&typeFile).readLine().trimmed().compare("Battery", Qt::CaseInsensitive) != 0) {
+            continue;
+        }
+
+        QFile statusFile(battery.absoluteFilePath() + "/status");
+        if (statusFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            const QString status = QTextStream(&statusFile).readLine().trimmed();
+            if (status.compare("Charging", Qt::CaseInsensitive) == 0
+                || status.compare("Full", Qt::CaseInsensitive) == 0) {
+                continue;
+            }
+        }
+
+        QFile powerFile(battery.absoluteFilePath() + "/power_now");
+        bool ok = false;
+        qint64 microwatts = 0;
+        if (powerFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            microwatts = QTextStream(&powerFile).readLine().trimmed().toLongLong(&ok);
+        }
+
+        if (!ok) {
+            QFile currentFile(battery.absoluteFilePath() + "/current_now");
+            QFile voltageFile(battery.absoluteFilePath() + "/voltage_now");
+            bool currentOk = false;
+            bool voltageOk = false;
+            qint64 microamps = 0;
+            qint64 microvolts = 0;
+            if (currentFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                microamps = QTextStream(&currentFile).readLine().trimmed().toLongLong(&currentOk);
+            }
+            if (voltageFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                microvolts = QTextStream(&voltageFile).readLine().trimmed().toLongLong(&voltageOk);
+            }
+            if (currentOk && voltageOk) {
+                watts += (std::abs(static_cast<double>(microamps))
+                          * std::abs(static_cast<double>(microvolts))) / 1'000'000'000'000.0;
+                foundPowerReading = true;
+            }
+        } else {
+            watts += std::abs(static_cast<double>(microwatts)) / 1'000'000.0;
+            foundPowerReading = true;
+        }
+    }
+
+    return foundPowerReading ? watts : -1.0;
 }
 
 bool BatteryManager::setChargeThreshold(int threshold)

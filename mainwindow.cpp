@@ -2,10 +2,17 @@
 #include "ui_mainwindow.h"
 
 #include <QDebug>
+#include <QButtonGroup>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QGridLayout>
+#include <QLayoutItem>
+#include <QProcess>
+#include <QRadioButton>
+#include <QRegularExpression>
 #include <QSignalBlocker>
+#include <QStandardPaths>
 #include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -48,7 +55,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnBrowseThreshold, &QPushButton::clicked, this, &MainWindow::onBrowseThresholdClicked);
     connect(ui->btnSaveSettings, &QPushButton::clicked, this, &MainWindow::onSaveSettingsClicked);
     connect(ui->btnResetSettings, &QPushButton::clicked, this, &MainWindow::onResetSettingsClicked);
-
     // Auto-update file paths when user finishes typing a battery directory
     connect(ui->batteryDirEdit, &QLineEdit::editingFinished, this, [this]() {
         const QString dir = ui->batteryDirEdit->text().trimmed();
@@ -81,6 +87,13 @@ void MainWindow::updateBatteryInfo()
         ui->batteryStatus->setText("Battery Status: Unknown");
     }
 
+    const double watts = m_battery.powerConsumptionWatts();
+    if (watts >= 0.0) {
+        ui->batteryPower->setText(QString("Power Consumption: %1 W").arg(watts, 0, 'f', 2));
+    } else {
+        ui->batteryPower->setText("Power Consumption: Unknown");
+    }
+
     const int threshold = m_battery.chargeThreshold();
     if (threshold >= 0) {
         ui->batteryThreshold->setText(QString("Charge limit: %1%").arg(threshold));
@@ -94,6 +107,121 @@ void MainWindow::updateBatteryInfo()
         ui->batt60->setChecked(threshold == 60);
     } else {
         ui->batteryThreshold->setText("Charge limit: Unknown");
+    }
+
+    updatePowerProfile();
+}
+
+void MainWindow::updatePowerProfile()
+{
+    const QString executable = QStandardPaths::findExecutable("powerprofilesctl");
+    if (executable.isEmpty()) {
+        ui->powerProfileButtonsContainer->setEnabled(false);
+        ui->powerProfileStatus->setText("powerprofilesctl is not available");
+        return;
+    }
+
+    QProcess listProcess;
+    listProcess.start(executable, {"list"});
+    if (!listProcess.waitForFinished(1000) || listProcess.exitCode() != 0) {
+        ui->powerProfileButtonsContainer->setEnabled(false);
+        ui->powerProfileStatus->setText("Unable to read available power profiles");
+        return;
+    }
+
+    QStringList profiles;
+    const QRegularExpression profilePattern("^\\s*\\*?\\s*([a-zA-Z0-9_-]+):");
+    const QStringList lines = QString::fromLocal8Bit(listProcess.readAllStandardOutput())
+                                  .split('\n', Qt::SkipEmptyParts);
+    for (const QString &line : lines) {
+        const int firstText = line.indexOf(QRegularExpression("\\S"));
+        if (firstText > 2) {
+            continue;
+        }
+        const QRegularExpressionMatch match = profilePattern.match(line);
+        if (!match.hasMatch()) {
+            continue;
+        }
+        const QString profile = match.captured(1);
+        if (!profile.endsWith("Driver") && profile != "Degraded" && !profiles.contains(profile)) {
+            profiles.append(profile);
+        }
+    }
+
+    if (profiles.isEmpty()) {
+        ui->powerProfileButtonsContainer->setEnabled(false);
+        ui->powerProfileStatus->setText("No power profiles available");
+        return;
+    }
+    rebuildPowerProfileButtons(profiles);
+
+    QProcess getProcess;
+    getProcess.start(executable, {"get"});
+    if (!getProcess.waitForFinished(1000) || getProcess.exitCode() != 0) {
+        ui->powerProfileButtonsContainer->setEnabled(false);
+        ui->powerProfileStatus->setText("Unable to read active power profile");
+        return;
+    }
+
+    const QString activeProfile = QString::fromLocal8Bit(getProcess.readAllStandardOutput()).trimmed();
+    const QSignalBlocker blocker(m_powerProfileButtonGroup);
+    const int activeIndex = m_powerProfileNames.indexOf(activeProfile);
+    if (activeIndex >= 0) {
+        if (QAbstractButton *button = m_powerProfileButtonGroup->button(activeIndex)) {
+            button->setChecked(true);
+            ui->powerProfileStatus->setText(QString("Active: %1").arg(button->text()));
+        }
+    } else {
+        ui->powerProfileStatus->setText(QString("Active: %1").arg(activeProfile.isEmpty() ? "Unknown" : activeProfile));
+    }
+    ui->powerProfileStatus->setStyleSheet("");
+    ui->powerProfileButtonsContainer->setEnabled(true);
+}
+
+void MainWindow::rebuildPowerProfileButtons(const QStringList &profiles)
+{
+    if (profiles == m_powerProfileNames && m_powerProfileButtonGroup) {
+        return;
+    }
+
+    QGridLayout *layout = qobject_cast<QGridLayout *>(ui->powerProfileButtonsContainer->layout());
+    while (QLayoutItem *item = layout->takeAt(0)) {
+        delete item->widget();
+        delete item;
+    }
+    delete m_powerProfileButtonGroup;
+    m_powerProfileButtonGroup = new QButtonGroup(this);
+    m_powerProfileNames = profiles;
+
+    const int columns = profiles.size() > 4 ? 2 : 1;
+    for (int i = 0; i < profiles.size(); ++i) {
+        QString label = profiles.at(i);
+        label.replace('-', ' ');
+        label = label.left(1).toUpper() + label.mid(1);
+        auto *button = new QRadioButton(label, ui->powerProfileButtonsContainer);
+        m_powerProfileButtonGroup->addButton(button, i);
+        layout->addWidget(button, i / columns, i % columns);
+    }
+    connect(m_powerProfileButtonGroup, &QButtonGroup::idClicked,
+            this, &MainWindow::onPowerProfileActivated);
+}
+
+void MainWindow::onPowerProfileActivated(int index)
+{
+    if (index < 0 || index >= m_powerProfileNames.size()) {
+        return;
+    }
+
+    const QString profile = m_powerProfileNames.at(index);
+    QProcess process;
+    process.start(QStandardPaths::findExecutable("powerprofilesctl"), {"set", profile});
+    if (process.waitForFinished(2000) && process.exitCode() == 0) {
+        ui->powerProfileStatus->setStyleSheet("color: green;");
+        ui->powerProfileStatus->setText(QString("Active: %1").arg(m_powerProfileButtonGroup->button(index)->text()));
+    } else {
+        ui->powerProfileStatus->setStyleSheet("color: red;");
+        ui->powerProfileStatus->setText("Failed to change power profile");
+        updatePowerProfile();
     }
 }
 
@@ -220,5 +348,3 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
-
-

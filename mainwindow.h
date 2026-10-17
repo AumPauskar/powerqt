@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QStringList>
 
 #include "batterymanager.h"
 
@@ -10,6 +11,8 @@ namespace Ui {
 class MainWindow;
 }
 QT_END_NAMESPACE
+
+class QButtonGroup;
 
 class MainWindow : public QMainWindow
 {
@@ -30,9 +33,15 @@ private slots:
     void onBrowseLevelClicked();
     void onBrowseStatusClicked();
     void onBrowseThresholdClicked();
+    void onPowerProfileActivated(int index);
 
 private:
+    void updatePowerProfile();
+    void rebuildPowerProfileButtons(const QStringList &profiles);
+
     Ui::MainWindow *ui;
     BatteryManager m_battery;
+    QButtonGroup *m_powerProfileButtonGroup = nullptr;
+    QStringList m_powerProfileNames;
 };
 #endif // MAINWINDOW_H

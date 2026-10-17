@@ -57,6 +57,18 @@
             </widget>
            </item>
            <item>
+            <widget class="QLabel" name="batteryPower">
+             <property name="font">
+              <font>
+               <pointsize>11</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Power Consumption: -- W</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QLabel" name="batteryThreshold">
              <property name="font">
               <font>
@@ -95,6 +107,34 @@
             <widget class="QRadioButton" name="batt60">
              <property name="text">
               <string>Maximum longevity - 60%</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="powerManagementGroup">
+          <property name="title">
+           <string>Power Management</string>
+          </property>
+          <layout class="QHBoxLayout" name="powerManagementLayout">
+           <item>
+            <widget class="QLabel" name="powerProfileLabel">
+             <property name="text">
+              <string>Power profile:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="powerProfileButtonsContainer">
+             <layout class="QGridLayout" name="powerProfileButtonsLayout"/>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="powerProfileStatus">
+             <property name="text">
+              <string>Reading active profile...</string>
              </property>
             </widget>
            </item>
